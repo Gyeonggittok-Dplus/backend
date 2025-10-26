@@ -1,16 +1,26 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+app = FastAPI(title="GyeonggiD-Plus API")
 
-# CORS 설정 (React 프론트엔드 연결용)
+origins = [
+    "https://gyeonggid-plus.vercel.app",
+    "http://localhost:5173",
+    "https://gyeonggid-plus-backend.onrender.com"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ✅ health endpoint 추가
+@app.get("/api/health")
+def health():
+    return {"status": "ok", "service": "GyeonggiD-Plus", "version": "0.1.0"}
 
 @app.get("/api/ping")
 def ping():
