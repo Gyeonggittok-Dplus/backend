@@ -17,7 +17,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ✅ health endpoint 추가
+@app.get("/")
+def root():
+    return {"message": "GyeonggiD-Plus Backend is running 🚀"}
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "GyeonggiD-Plus", "version": "0.1.0"}
