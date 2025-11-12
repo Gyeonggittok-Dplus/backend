@@ -1,35 +1,36 @@
+from pathlib import Path
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from routers import welfare, chatbot, alert, auth
 
-app = FastAPI(title="GyeonggiD-Plus API")
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR.parent / ".env", override=False)
 
-origins = [
-    "https://gyeonggid-plus.vercel.app",
-    "http://localhost:5173",
-    "https://gyeonggid-plus-backend.onrender.com"
-]
+app = FastAPI(title="GyeonggiD+ Backend")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/")
-def root():
-    return {"message": "GyeonggiD-Plus Backend is running 🚀"}
+app.include_router(welfare.router, prefix="/api/welfare", tags=["Welfare"])
+app.include_router(chatbot.router, prefix="/api/chatbot", tags=["Chatbot"])
+app.include_router(alert.router, prefix="/api/alert", tags=["Alert"])
+app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
+
+
+@app.get("/ping")
+def ping():
+    return {"status": "ok"}
+
 
 @app.get("/api/health")
-def health():
-    return {"status": "ok", "service": "GyeonggiD-Plus", "version": "0.1.0"}
-
-@app.get("/api/ping")
-def ping():
-    return {"message": "pong"}
-
-@app.post("/api/chat")
-def chat(data: dict):
-    user_input = data.get("message", "")
-    return {"reply": f"'{user_input}'에 대한 복지 정보를 준비 중이에요!"}
+def api_health():
+    """Standardized health endpoint for load balancers / uptime checks."""
+    return {"status": "ok"}
