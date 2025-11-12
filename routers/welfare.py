@@ -1,25 +1,58 @@
-from fastapi import APIRouter
+from __future__ import annotations
 
-# FastAPI Router object
+from functools import wraps
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from schemas import WelfareAnnouncement, WelfareFacility, WelfareService
+from services.gyeonggi_openapi import (
+    GyeonggiOpenAPIClient,
+    GyeonggiOpenAPIError,
+    get_gyeonggi_client,
+)
+
 router = APIRouter()
 
-# Demo welfare dataset (UTF-8)
-dummy_welfare = [
-    {"id": 1, "title": "청년 주거 지원", "desc": "월세 최대 20만원 지원", "region": "경기도"},
-    {"id": 2, "title": "노인 돌봄 서비스", "desc": "가정방문 돌봄 제공", "region": "수원시"},
-    {"id": 3, "title": "저소득 의료비 지원", "desc": "연간 200만원 한도 지원", "region": "안양시"},
-]
+
+def _map_errors(func):
+    """Translate client-layer errors into HTTP responses."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except GyeonggiOpenAPIError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    return wrapper
 
 
-@router.get("/list")
-def get_welfare_list():
-    return {"welfare": dummy_welfare}
+@router.get("/list", response_model=List[WelfareService])
+@_map_errors
+def list_welfare_services(
+    region: Optional[str] = Query(None, description="Optional city/county filter"),
+    client: GyeonggiOpenAPIClient = Depends(get_gyeonggi_client),
+) -> List[WelfareService]:
+    services = client.fetch_welfare_services(region=region)
+    return services
 
 
-@router.get("/{welfare_id}")
-def get_welfare_detail(welfare_id: int):
-    result = next((item for item in dummy_welfare if item["id"] == welfare_id), None)
-    if result:
-        return result
-    return {"error": "Not found"}
+@router.get("/facilities", response_model=List[WelfareFacility])
+@_map_errors
+def list_welfare_facilities(
+    region: Optional[str] = Query(None, description="Optional city/county filter"),
+    client: GyeonggiOpenAPIClient = Depends(get_gyeonggi_client),
+) -> List[WelfareFacility]:
+    facilities = client.fetch_facilities(region=region)
+    return facilities
 
+
+@router.get("/announcements", response_model=List[WelfareAnnouncement])
+@_map_errors
+def list_welfare_announcements(
+    region: Optional[str] = Query(None, description="Optional city/county filter"),
+    client: GyeonggiOpenAPIClient = Depends(get_gyeonggi_client),
+) -> List[WelfareAnnouncement]:
+    announcements = client.fetch_announcements(region=region)
+    return announcements
