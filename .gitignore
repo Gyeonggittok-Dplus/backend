@@ -1,2 +1,11 @@
--e "backend/.env\nfrontend/.env.local\n*.log\nnode_modules/" 
-".env" 
+# 환경 변수 파일
+.env
+.env.local
+backend/.env
+frontend/.env
+
+# 로그 및 기타 불필요한 파일
+*.log
+__pycache__/
+node_modules/
+venv/
