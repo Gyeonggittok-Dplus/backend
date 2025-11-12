@@ -1,0 +1,2 @@
+-e "backend/.env\nfrontend/.env.local\n*.log\nnode_modules/" 
+".env" 
