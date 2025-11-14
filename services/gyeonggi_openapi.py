@@ -9,9 +9,11 @@ import httpx
 from schemas import WelfareAnnouncement, WelfareFacility, WelfareService
 
 DEFAULT_BASE_URL = "https://openapi.gg.go.kr"
-# 경기 복지 서비스 현황 (TBWELFARESSRSM) 데이터셋을 기본값으로 사용한다.
+# Primary datasets (override via env vars if needed)
 DEFAULT_SERVICE_DATASET = os.getenv("GYEONGGI_SERVICE_DATASET", "TBWELFARESSRSM")
-DEFAULT_FACILITY_DATASET = os.getenv("GYEONGGI_FACILITY_DATASET", "GGD_HOUSING_WELFARE_INST")
+DEFAULT_SENIOR_DATASET = os.getenv("GYEONGGI_SENIOR_DATASET", "OllrMiryfcSsrsM")
+DEFAULT_YOUTH_DATASET = os.getenv("GYEONGGI_YOUTH_DATASET", "JnfrMiryfcSsrsM")
+DEFAULT_FACILITY_DATASET = os.getenv("GYEONGGI_FACILITY_DATASET", "Ggresidewelfareinst")
 DEFAULT_ANNOUNCEMENT_DATASET = os.getenv("GYEONGGI_ANNOUNCEMENT_DATASET", "GGD_WELFARE_NOTICE")
 
 
@@ -73,11 +75,23 @@ class GyeonggiOpenAPIClient:
                         return rows
         return []
 
-    def fetch_welfare_services(self, region: Optional[str] = None) -> List[WelfareService]:
+    def fetch_welfare_services(
+        self,
+        region: Optional[str] = None,
+        dataset: Optional[str] = None,
+    ) -> List[WelfareService]:
         params: Dict[str, Any] = {}
         if region:
             params["SIGUN_NM"] = region
-        rows = self._request(DEFAULT_SERVICE_DATASET, params=params)
+        rows = self._request(dataset or DEFAULT_SERVICE_DATASET, params=params)
+        return [WelfareService.from_api(row) for row in rows]
+
+    def fetch_senior_services(self) -> List[WelfareService]:
+        rows = self._request(DEFAULT_SENIOR_DATASET)
+        return [WelfareService.from_api(row) for row in rows]
+
+    def fetch_youth_services(self) -> List[WelfareService]:
+        rows = self._request(DEFAULT_YOUTH_DATASET)
         return [WelfareService.from_api(row) for row in rows]
 
     def fetch_facilities(self, region: Optional[str] = None) -> List[WelfareFacility]:

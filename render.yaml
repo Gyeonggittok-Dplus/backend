@@ -8,3 +8,9 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
+      - key: GOOGLE_CLIENT_ID
+        value: 490323551835-p96lhncd8m2rbi5o6gddgh1s1vjbd30e.apps.googleusercontent.com
+      - key: JWT_SECRET
+        value: KoD6drOB1piQuuay5iB0o2qCZO7kQaV0tv3SMHCHrq8XG2p22FtIMvGoKYCBL3jV
+      - key: GYEONGGI_OPENAPI_KEY
+        value: 90d4d98c6f5141de80328da649813344
