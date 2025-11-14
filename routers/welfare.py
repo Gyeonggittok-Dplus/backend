@@ -50,82 +50,82 @@ def list_welfare_services(
     return rows
 
 
-@router.get("/list/senior", response_model=List[WelfareService])
-@_map_errors
-def list_senior_services(
-    client: GyeonggiOpenAPIClient = Depends(get_gyeonggi_client),
-) -> List[WelfareService]:
-    services = client.fetch_senior_services()
-    return services
-
-
-@router.get("/list/youth", response_model=List[WelfareService])
-@_map_errors
-def list_youth_services(
-    client: GyeonggiOpenAPIClient = Depends(get_gyeonggi_client),
-) -> List[WelfareService]:
-    services = client.fetch_youth_services()
-    return services
-
-
-@router.get("/facilities", response_model=List[WelfareFacility])
-def list_welfare_facilities(
-        region: Optional[str] = Query(None, description="Optional city/county filter"),
-) -> List[WelfareFacility]:
-    sql = """                                                                                                                                                     
-        SELECT                                                                                                                                                    
-            facility_id,                                                                                                                                          
-            name,                                                                                                                                                 
-            category,                                                                                                                                             
-            address,                                                                                                                                              
-            region,                                                                                                                                               
-            latitude,                                                                                                                                             
-            longitude,                                                                                                                                            
-            phone,                                                                                                                                                
-            updated_at                                                                                                                                            
-        FROM welfare_facilities                                                                                                                                   
-    """
-    params: Dict[str, Any] = {}
-    if region:
-        sql += " WHERE region = %(region)s"
-        params["region"] = region
-
-    try:
-        with _get_conn() as conn, conn.cursor() as cur:
-            cur.execute(sql, params)
-            rows = cur.fetchall()
-    except psycopg2.Error as exc:
-        raise HTTPException(status_code=500, detail=f"Database error: {exc}") from exc
-
-    return [WelfareFacility(**row) for row in rows]
-
-
-@router.get("/announcements", response_model=List[WelfareAnnouncement])
-def list_welfare_announcements(
-        region: Optional[str] = Query(None, description="Optional city/county filter"),
-) -> List[WelfareAnnouncement]:
-    sql = """                                                                                                                                                     
-        SELECT                                                                                                                                                    
-            announcement_id,                                                                                                                                      
-            title,                                                                                                                                                
-            summary,                                                                                                                                              
-            category,                                                                                                                                             
-            apply_start_date,                                                                                                                                     
-            apply_end_date,                                                                                                                                       
-            region,                                                                                                                                               
-            source_url                                                                                                                                            
-        FROM welfare_announcements                                                                                                                                
-    """
-    params: Dict[str, Any] = {}
-    if region:
-        sql += " WHERE region = %(region)s"
-        params["region"] = region
-
-    try:
-        with _get_conn() as conn, conn.cursor() as cur:
-            cur.execute(sql, params)
-            rows = cur.fetchall()
-    except psycopg2.Error as exc:
-        raise HTTPException(status_code=500, detail=f"Database error: {exc}") from exc
-
-    return [WelfareAnnouncement(**row) for row in rows]
+# @router.get("/list/senior", response_model=List[WelfareService])
+# @_map_errors
+# def list_senior_services(
+#     client: GyeonggiOpenAPIClient = Depends(get_gyeonggi_client),
+# ) -> List[WelfareService]:
+#     services = client.fetch_senior_services()
+#     return services
+#
+#
+# @router.get("/list/youth", response_model=List[WelfareService])
+# @_map_errors
+# def list_youth_services(
+#     client: GyeonggiOpenAPIClient = Depends(get_gyeonggi_client),
+# ) -> List[WelfareService]:
+#     services = client.fetch_youth_services()
+#     return services
+#
+#
+# @router.get("/facilities", response_model=List[WelfareFacility])
+# def list_welfare_facilities(
+#         region: Optional[str] = Query(None, description="Optional city/county filter"),
+# ) -> List[WelfareFacility]:
+#     sql = """
+#         SELECT
+#             facility_id,
+#             name,
+#             category,
+#             address,
+#             region,
+#             latitude,
+#             longitude,
+#             phone,
+#             updated_at
+#         FROM welfare_facilities
+#     """
+#     params: Dict[str, Any] = {}
+#     if region:
+#         sql += " WHERE region = %(region)s"
+#         params["region"] = region
+#
+#     try:
+#         with _get_conn() as conn, conn.cursor() as cur:
+#             cur.execute(sql, params)
+#             rows = cur.fetchall()
+#     except psycopg2.Error as exc:
+#         raise HTTPException(status_code=500, detail=f"Database error: {exc}") from exc
+#
+#     return [WelfareFacility(**row) for row in rows]
+#
+#
+# @router.get("/announcements", response_model=List[WelfareAnnouncement])
+# def list_welfare_announcements(
+#         region: Optional[str] = Query(None, description="Optional city/county filter"),
+# ) -> List[WelfareAnnouncement]:
+#     sql = """
+#         SELECT
+#             announcement_id,
+#             title,
+#             summary,
+#             category,
+#             apply_start_date,
+#             apply_end_date,
+#             region,
+#             source_url
+#         FROM welfare_announcements
+#     """
+#     params: Dict[str, Any] = {}
+#     if region:
+#         sql += " WHERE region = %(region)s"
+#         params["region"] = region
+#
+#     try:
+#         with _get_conn() as conn, conn.cursor() as cur:
+#             cur.execute(sql, params)
+#             rows = cur.fetchall()
+#     except psycopg2.Error as exc:
+#         raise HTTPException(status_code=500, detail=f"Database error: {exc}") from exc
+#
+#     return [WelfareAnnouncement(**row) for row in rows]
