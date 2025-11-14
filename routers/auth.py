@@ -129,7 +129,6 @@ def post_inform(body: UserInformBody):
     if not result:
         raise HTTPException(status_code=404, detail="User with this email does not exist")
 
-    user_id = result[0]
 
     # 2. 나이 / 지역 / 성별 업데이트
     cur.execute(
@@ -138,9 +137,9 @@ def post_inform(body: UserInformBody):
         SET age = %s,
             location = %s,
             sex = %s
-        WHERE user_id = %s
+        WHERE email = %s
         """,
-        (body.age, body.location, body.sex, user_id)
+        (body.age, body.location, body.sex, body.email)
     )
 
     conn.commit()
