@@ -4,9 +4,9 @@ from pydantic import BaseModel
 from typing import Optional
 import os
 
-try:
-    from google.oauth2 import id_token as google_id_token
-    from google.auth.transport import requests as google_requests
+
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
 except Exception:  # optional at dev time; real env will install deps
     google_id_token = None
     google_requests = None
