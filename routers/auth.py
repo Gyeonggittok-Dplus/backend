@@ -7,9 +7,8 @@ import os
 
 from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_requests
-except Exception:  # optional at dev time; real env will install deps
-    google_id_token = None
-    google_requests = None
+ # optional at dev time; real env will install deps
+
 
 try:
     import jwt
