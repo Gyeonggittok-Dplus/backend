@@ -32,13 +32,13 @@ def google_verify(body: GoogleVerifyBody):
     client_id = os.getenv("GOOGLE_CLIENT_ID")
     if not client_id:
         raise HTTPException(status_code=500, detail="Server misconfigured: GOOGLE_CLIENT_ID not set")
-        logger.error("Server misconfigured: GOOGLE_CLIENT_ID not set")
+
     if google_id_token is None or google_requests is None:
         raise HTTPException(status_code=500, detail="google-auth not installed")
-        logger.error("google-auth not installed")
+
     if jwt is None:
         raise HTTPException(status_code=500, detail="PyJWT not installed")
-        logger.error("PyJWT not installed")
+
     try:
         info = google_id_token.verify_oauth2_token(body.id_token, google_requests.Request(), client_id)
     except Exception as e:
@@ -49,7 +49,6 @@ def google_verify(body: GoogleVerifyBody):
     if token_aud != client_id:
         logger.error("Google token aud mismatch. expected=%s received=%s", client_id, token_aud)
         raise HTTPException(status_code=401, detail="Invalid Google ID token")
-        logger.error("GOOGLE_CLIENT_ID not set")
     payload = {    
         "sub": info.get("sub"),
         "email": info.get("email"),
@@ -81,7 +80,7 @@ def google_verify(body: GoogleVerifyBody):
             if not exists:
                 cur.execute(
                     "INSERT INTO userinform (email, age, location, sex) VALUES (%s, %s, %s, %s)",
-                    (email, "", "", "")
+                    (email, 0, "", "")
                 )
                 conn.commit()
                 cur.close()
