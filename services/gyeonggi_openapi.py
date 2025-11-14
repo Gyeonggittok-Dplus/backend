@@ -44,7 +44,7 @@ class GyeonggiOpenAPIClient:
         }
         if params:
             query.update(params)
-
+        print(params)
         url = f"{self.base_url.rstrip('/')}/{dataset}"
         response = self._client.get(url, params=query)
         try:

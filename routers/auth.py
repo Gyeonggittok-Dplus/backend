@@ -4,17 +4,15 @@ from pydantic import BaseModel
 from typing import Optional
 import os
 
-try:
-    from google.oauth2 import id_token as google_id_token
-    from google.auth.transport import requests as google_requests
-except Exception:  # optional at dev time; real env will install deps
-    google_id_token = None
-    google_requests = None
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
 
 try:
     import jwt
 except Exception:
     jwt = None
+
+import psycopg2  # 👈 DB 연동 추가
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -52,6 +50,62 @@ def google_verify(body: GoogleVerifyBody):
         "name": info.get("name"),
     }
 
+    # ============================
+    # ① Neon userinform에 사용자 저장
+    # ============================
+    email = payload.get("email")
+    db_url = os.getenv("DATABASE_URL")
+
+    if not db_url:
+        logger.warning("DATABASE_URL not set; skipping userinform insert")
+    elif not email:
+        logger.warning("No email in Google token; skipping userinform insert")
+    else:
+        conn = None
+        cur = None
+        try:
+            conn = psycopg2.connect(db_url)
+            cur = conn.cursor()
+
+            # email이 이미 있는지 확인
+            cur.execute("SELECT 1 FROM userinform WHERE email = %s", (email,))
+            exists = cur.fetchone()
+
+            # 없으면 새로 INSERT (age/location/sex는 일단 빈 문자열)
+            if not exists:
+                cur.execute(
+                    "INSERT INTO userinform (email, age, location, sex) VALUES (%s, %s, %s, %s)",
+                    (email, "", "", "")
+                )
+                conn.commit()
+                cur.close()
+                conn.close()
+                return {
+                    "user": "new user",
+                    "email": email,
+                    "status": "created"
+                }
+
+
+        except Exception as e:
+            # DB 문제 때문에 로그인 자체를 막고 싶지 않으면, 여기서는 그냥 로그만 남김
+            logger.error("Failed to upsert user in userinform: %s", e, exc_info=True)
+            return {"error",e}
+        finally:
+            if cur is not None:
+                try:
+                    cur.close()
+                except Exception:
+                    pass
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
+    # ============================
+    # ② 기존 JWT 발급 로직 그대로 유지
+    # ============================
     secret = os.getenv("JWT_SECRET", "dev-secret")
     token = jwt.encode({**payload}, secret, algorithm="HS256")
 
