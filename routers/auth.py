@@ -123,7 +123,7 @@ def post_inform(body: UserInformBody):
     cur = conn.cursor()
 
     # 1. 이메일 존재 확인
-    cur.execute("SELECT user_id FROM userinform WHERE email = %s", (body.email,))
+    cur.execute("SELECT 1 FROM userinform WHERE email = %s", (body.email,))
     result = cur.fetchone()
 
     if not result:
