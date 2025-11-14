@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field
@@ -26,6 +27,14 @@ def _as_float(value: Any) -> Optional[float]:
         return None
 
 
+def _stable_id(*parts: Optional[str], prefix: str = "svc") -> Optional[str]:
+    tokens = [p.strip() for p in parts if isinstance(p, str) and p and p.strip()]
+    if not tokens:
+        return None
+    digest = hashlib.sha1("||".join(tokens).encode("utf-8")).hexdigest()
+    return f"{prefix}-{digest[:16]}"
+
+
 class WelfareService(BaseModel):
     service_id: str = Field(..., description="Unique service identifier from the open API")
     name: str = Field(..., description="Official service name")
@@ -40,17 +49,69 @@ class WelfareService(BaseModel):
 
     @classmethod
     def from_api(cls, data: Dict[str, Any]) -> "WelfareService":
+        name = _pick(
+            data,
+            "SRVC_NM",
+            "SERVC_NM",
+            "SERVICE_NM",
+            "PRGM_NM",
+            "TITLE",
+        )
+        region = _pick(data, "SIGUN_NM", "BRSI_NM", "REGION_NM", "AREA_NM")
+        application_url = _pick(data, "SERVC_RINK_ADDR", "SRVC_URL", "APPLY_URL", "RELATE_INFO", "LINK_URL", "HMPG_ADDR")
+        service_id = (
+            _pick(data, "SRVC_ID", "SERVC_ID", "SERVICE_ID", "ID", "REG_NO")
+            or _stable_id(name, region, application_url, prefix="svc")
+            or f"svc-{data.get('ROW_NUM', '0')}"
+        )
+
         return cls(
-            service_id=_pick(data, "SRVC_ID", "SERVICE_ID", "ID") or f"svc-{data.get('ROW_NUM', '0')}",
-            name=_pick(data, "SRVC_NM", "SERVICE_NM", "TITLE") or "TBD",
-            summary=_pick(data, "SRVC_SUM", "SERVICE_SUM", "SUMMARY"),
-            benefit_detail=_pick(data, "SPRNT_CONT", "BENEFIT_CN", "BENEFIT_DETAIL"),
-            eligibility=_pick(data, "TRGTER_RQISIT", "ELGBLTY_CN", "ELIGIBILITY"),
-            region=_pick(data, "SIGUN_NM", "BRSI_NM", "REGION_NM"),
-            managing_agency=_pick(data, "MANAGE_INST_NM", "CHRG_ORG_NM", "AGENCY_NM"),
-            contact=_pick(data, "MANAGE_INST_TELNO", "TELNO", "CONTACT"),
-            application_url=_pick(data, "SRVC_URL", "APPLY_URL", "LINK_URL"),
-            updated_at=_pick(data, "UPDATE_DT", "REG_DT", "LAST_UPD_DT"),
+            service_id=service_id,
+            name=name or "TBD",
+            summary=_pick(
+                data,
+                "SRVC_SUM",
+                "SERVICE_SUM",
+                "SUMMARY",
+                "MAIN_PURPS",
+                "SPORT_CYCL",
+            ),
+            benefit_detail=_pick(
+                data,
+                "SPRNT_CONT",
+                "BENEFIT_CN",
+                "BENEFIT_DETAIL",
+                "SPORT_CN",
+                "SPORT_TARGET",
+                "GUID",
+            ),
+            eligibility=_pick(
+                data,
+                "TRGTER_RQISIT",
+                "ELGBLTY_CN",
+                "ELIGIBILITY",
+                "SPORT_TARGET",
+                "APLCATN_METH",
+            ),
+            region=region,
+            managing_agency=_pick(
+                data,
+                "MANAGE_INST_NM",
+                "CHRG_ORG_NM",
+                "CHARGE_DEPT_NM",
+                "OPERT_ORGNZT_NM",
+                "OPERT_MAINBD_NM",
+                "AGENCY_NM",
+            ),
+            contact=_pick(
+                data,
+                "MANAGE_INST_TELNO",
+                "TELNO",
+                "CONTACT",
+                "GUID",
+            ),
+            application_url=application_url,
+            updated_at=_pick(data, "UPDATE_DT", "REG_DT", "LAST_UPD_DT", "DATA_STD_DE"),
         )
 
 
@@ -67,11 +128,17 @@ class WelfareFacility(BaseModel):
 
     @classmethod
     def from_api(cls, data: Dict[str, Any]) -> "WelfareFacility":
+        facility_id = _pick(data, "FACLT_SN", "FACILITY_ID", "ID", "INST_ID") or _stable_id(
+            _pick(data, "INST_NM", "FACLT_NM", "FACILITY_NM"),
+            _pick(data, "SIGUN_NM", "REGION_NM"),
+            _pick(data, "REFINE_ROADNM_ADDR", "REFINE_LOTNO_ADDR"),
+            prefix="fac",
+        )
         return cls(
-            facility_id=_pick(data, "FACLT_SN", "FACILITY_ID", "ID") or f"fac-{data.get('ROW_NUM', '0')}",
-            name=_pick(data, "FACLT_NM", "FACILITY_NM", "CENTER_NM") or "Unnamed facility",
+            facility_id=facility_id or f"fac-{data.get('ROW_NUM', '0')}",
+            name=_pick(data, "FACLT_NM", "FACILITY_NM", "CENTER_NM", "INST_NM") or "Unnamed facility",
             category=_pick(data, "FACLT_CL_NM", "CATEGORY_NM", "TYPE"),
-            address=_pick(data, "REFINE_LOTNO_ADDR", "REFINE_ROADNM_ADDR", "ADDR"),
+            address=_pick(data, "REFINE_ROADNM_ADDR", "REFINE_LOTNO_ADDR", "ADDR"),
             region=_pick(data, "SIGUN_NM", "CTPRVN_NM", "REGION_NM"),
             latitude=_as_float(_pick(data, "REFINE_WGS84_LAT", "LAT")),
             longitude=_as_float(_pick(data, "REFINE_WGS84_LOGT", "LNG")),

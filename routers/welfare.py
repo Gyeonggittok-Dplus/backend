@@ -50,6 +50,24 @@ def list_welfare_services(
     return rows
 
 
+@router.get("/list/senior", response_model=List[WelfareService])
+@_map_errors
+def list_senior_services(
+    client: GyeonggiOpenAPIClient = Depends(get_gyeonggi_client),
+) -> List[WelfareService]:
+    services = client.fetch_senior_services()
+    return services
+
+
+@router.get("/list/youth", response_model=List[WelfareService])
+@_map_errors
+def list_youth_services(
+    client: GyeonggiOpenAPIClient = Depends(get_gyeonggi_client),
+) -> List[WelfareService]:
+    services = client.fetch_youth_services()
+    return services
+
+
 @router.get("/facilities", response_model=List[WelfareFacility])
 def list_welfare_facilities(
         region: Optional[str] = Query(None, description="Optional city/county filter"),
