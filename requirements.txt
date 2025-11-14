@@ -17,3 +17,4 @@ typing_extensions==4.15.0
 uvicorn==0.38.0
 google-auth==2.35.0
 PyJWT==2.9.0
+requests==2.32.5
