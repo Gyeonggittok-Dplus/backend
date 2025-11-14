@@ -7,8 +7,6 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from fastapi import APIRouter, HTTPException, Query
 
-from schemas import WelfareAnnouncement, WelfareFacility
-
 router = APIRouter()
 
 
