@@ -9,7 +9,7 @@ import os
 from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_requests
  # optional at dev time; real env will install deps
-
+from schemas.user_inform import UserInformBody,GoogleVerifyBody
 
 
 try:
@@ -22,9 +22,8 @@ import psycopg2  # 👈 DB 연동 추가
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+db_url = os.getenv("DATABASE_URL")
 
-class GoogleVerifyBody(BaseModel):
-    id_token: str
 
 
 @router.post("/google/verify")
@@ -115,3 +114,40 @@ def google_verify(body: GoogleVerifyBody):
     token = jwt.encode({**payload}, secret, algorithm="HS256")
 
     return {"access_token": token, "token_type": "bearer", "user": payload}
+
+
+@router.post("/post_inform")
+def post_inform(body: UserInformBody):
+
+    conn = psycopg2.connect(db_url)
+    cur = conn.cursor()
+
+    # 1. 이메일 존재 확인
+    cur.execute("SELECT user_id FROM userinform WHERE email = %s", (body.email,))
+    result = cur.fetchone()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="User with this email does not exist")
+
+    user_id = result[0]
+
+    # 2. 나이 / 지역 / 성별 업데이트
+    cur.execute(
+        """
+        UPDATE userinform
+        SET age = %s,
+            location = %s,
+            sex = %s
+        WHERE user_id = %s
+        """,
+        (body.age, body.location, body.sex, user_id)
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return {
+        "code": 200,
+        "message": "User info updated successfully",
+    }
