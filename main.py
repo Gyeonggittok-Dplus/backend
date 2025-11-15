@@ -3,12 +3,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import welfare, chatbot, alert, auth, map
+
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
-load_dotenv(BASE_DIR.parent / ".env", override=False)
 
+load_dotenv(BASE_DIR.parent / ".env", override=False)
+from routers import welfare, chatbot, alert, auth, map
 app = FastAPI(title="GyeonggiD+ Backend")
 
 app.add_middleware(
