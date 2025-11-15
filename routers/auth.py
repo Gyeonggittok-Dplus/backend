@@ -22,6 +22,7 @@ import psycopg2  # 👈 DB 연동 추가
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 db_url = os.getenv("DATABASE_URL")
 
 
@@ -83,10 +84,14 @@ def google_verify(body: GoogleVerifyBody):
                 conn.commit()
                 cur.close()
                 conn.close()
+                secret = os.getenv("JWT_SECRET", "dev-secret")
+                token = jwt.encode({**payload}, secret, algorithm="HS256")
                 return {
                     "user": "new user",
                     "email": email,
-                    "status": "created"
+                    "status": "created",
+                    "access_token": token,
+                    "token_type": "bearer"
                 }
 
 
@@ -149,3 +154,46 @@ def post_inform(body: UserInformBody):
         "code": 200,
         "message": "User info updated successfully",
     }
+
+def get_inform_fun(email:str):
+    database = psycopg2.connect(db_url)
+    sql = """
+                SELECT 
+                email,
+                location,
+                age,
+                sex
+            FROM userinform
+            WHERE email = %s
+            LIMIT 1
+            """
+
+    try:
+        with database as conn, conn.cursor() as cur:
+            cur.execute(sql, (email,))
+            row = cur.fetchone()
+
+            if not row:
+                raise HTTPException(status_code=404, detail="해당 이메일의 유저 정보를 찾을 수 없습니다.")
+
+            # row 는 튜플이라 변환
+            user = {
+                "email": row[0],
+                "location": row[1],
+                "age": row[2],
+                "sex": row[3],
+            }
+
+            return {"success": True, "user": user}
+
+    except psycopg2.Error as exc:
+        raise HTTPException(status_code=500, detail=f"DB 조회 오류: {exc}")
+@router.get("/get_inform")
+def get_inform(email:str):
+    """
+        userinform 테이블에서 email로 유저 정보를 조회하는 API
+        """
+    return get_inform_fun(email)
+
+
+

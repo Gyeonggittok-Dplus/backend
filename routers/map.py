@@ -10,7 +10,6 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 DB_DSN = os.getenv("DATABASE_URL")
-
 router = APIRouter()
 
 def get_db_connection():
@@ -56,7 +55,7 @@ async def get_gyeonggi_facilities(email: str):
         "Key": API_KEY,
         "Type": "json",  # <-- JSON을 직접 받음
         "pIndex": 1,
-        "pSize": 200,
+        "pSize": 1000,
         "SIGUN_NM" : SIGUN_NM
     }
 
