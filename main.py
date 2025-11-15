@@ -3,7 +3,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import welfare, chatbot, alert, auth
+from routers import welfare, chatbot, alert, auth, map
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
@@ -23,6 +23,7 @@ app.include_router(welfare.router, prefix="/api/welfare", tags=["Welfare"])
 app.include_router(chatbot.router, prefix="/api/chatbot", tags=["Chatbot"])
 app.include_router(alert.router, prefix="/api/alert", tags=["Alert"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
+app.include_router(map.router, prefix="/api/map",tags=["Map"])
 
 
 @app.get("/ping")

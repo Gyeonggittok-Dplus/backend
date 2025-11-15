@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 db_url = os.getenv("DATABASE_URL")
 
 
-
 @router.post("/google/verify")
 def google_verify(body: GoogleVerifyBody):
     client_id = os.getenv("GOOGLE_CLIENT_ID")
