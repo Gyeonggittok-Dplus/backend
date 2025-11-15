@@ -46,7 +46,7 @@ async def get_gyeonggi_facilities(email: str):
     유저 email만 받고, 경기도 공공데이터 API에서 시설 목록을 조회.
     """
 
-    API_URL = "https://openapi.gg.go.kr/Ggresidewelfareinst"  # 실제 API 종류에 맞게 수정
+    API_URL = "https://openapi.gg.go.kr/HtygdWelfaclt"  # 실제 API 종류에 맞게 수정
 
     API_KEY = os.getenv("GYEONGGI_OPENAPI_KEY")
     SIGUN_NM = get_user_location_by_email(email)
@@ -56,7 +56,7 @@ async def get_gyeonggi_facilities(email: str):
         "Type": "json",  # <-- JSON을 직접 받음
         "pIndex": 1,
         "pSize": 1000,
-        "SIGUN_NM" : SIGUN_NM
+        "SIGUNGU_NM" : SIGUN_NM
     }
 
     async with httpx.AsyncClient() as client:
@@ -69,12 +69,14 @@ async def get_gyeonggi_facilities(email: str):
         )
 
     json_data = resp.json()
+
     # JSON 구조에 따라 row 목록 추출
-    child  = json_data.get("Ggresidewelfareinst", [])
+    child  = json_data.get("HtygdWelfaclt", [])
     rows = next(
         (v.get("row", []) for v in child if isinstance(v, dict) and "row" in v),
         []
     )
+
     facilities = []
     for row in rows:
         try:
@@ -85,15 +87,16 @@ async def get_gyeonggi_facilities(email: str):
 
         facilities.append(
             Facility(
-                name=row.get("INST_NM"),
-                phone=row.get("TELNO"),
+                name=row.get("FACLT_NM"),
+                phone=row.get("DETAIL_TELNO"),
                 lot_addr=row.get("REFINE_LOTNO_ADDR"),
                 road_addr=row.get("REFINE_ROADNM_ADDR"),
-                lo_addr = row.get("HMPG_URL"),
+                lo_addr = row.get("HMPG_URL","wwww."),
                 lat=lat,
                 lng=lng,
             )
         )
+
 
     return FacilityResponse(
         code=200,
