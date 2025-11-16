@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 load_dotenv(BASE_DIR.parent / ".env", override=False)
-from routers import welfare, chatbot, alert, auth, map, user_inform
+from routers import welfare, chatbot, auth, map, user_inform
 app = FastAPI(title="GyeonggiD+ Backend")
 
 app.add_middleware(
@@ -21,11 +21,13 @@ app.add_middleware(
 
 app.include_router(welfare.router, prefix="/api/welfare", tags=["Welfare"])
 app.include_router(chatbot.router, prefix="/api/chatbot", tags=["Chatbot"])
-app.include_router(alert.router, prefix="/api/alert", tags=["Alert"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(map.router, prefix="/api/map",tags=["Map"])
 app.include_router(user_inform.router, prefix="/api/inform",tags=["Inform"])
 
+@app.get("/")
+def root():
+    return {"status" : "hello world"}
 
 @app.get("/ping")
 def ping():
